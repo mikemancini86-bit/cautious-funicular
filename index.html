@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Everett's Potty Chart 🌴</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Boogaloo&display=swap');
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #1b4d1e 0%, #2d6a30 40%, #4a8c3f 70%, #6ab04c 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Boogaloo', 'Comic Sans MS', cursive;
+      padding: 24px 16px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .leaf {
+      position: absolute;
+      opacity: 0.25;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .header { text-align: center; margin-bottom: 22px; z-index: 1; }
+    .header .monkeys { font-size: 44px; margin-bottom: 4px; }
+
+    .title {
+      font-size: 30px;
+      color: #f9e04b;
+      text-shadow: 2px 3px 0px #5a3a00, 0 0 20px rgba(249,224,75,0.3);
+      letter-spacing: 1px;
+      cursor: pointer;
+      margin-bottom: 4px;
+    }
+    .title:hover { opacity: 0.85; }
+
+    #nameInput {
+      font-size: 30px;
+      font-family: inherit;
+      border: 3px dashed #f9e04b;
+      border-radius: 12px;
+      padding: 4px 16px;
+      background: rgba(0,0,0,0.2);
+      color: #f9e04b;
+      text-align: center;
+      outline: none;
+      width: 280px;
+      display: none;
+    }
+
+    .subtitle {
+      color: #c8f5a0;
+      font-size: 15px;
+      text-shadow: 1px 1px 0 #2d6a30;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.93);
+      border-radius: 28px;
+      padding: 26px 22px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.35), 0 0 0 4px #f9e04b, 0 0 0 8px #2d6a30;
+      max-width: 620px;
+      width: 100%;
+      z-index: 1;
+    }
+
+    .legend {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      border-radius: 50px;
+      padding: 5px 16px;
+      font-size: 14px;
+      color: #333;
+      font-family: inherit;
+    }
+    .legend-item .emoji { font-size: 20px; }
+    .legend-item .lbl { font-weight: bold; }
+    .legend-item .sub { opacity: 0.7; }
+
+    .boxes-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .check-box {
+      width: 62px;
+      height: 66px;
+      border-radius: 16px;
+      border: 3px dashed #a5d6a7;
+      background: linear-gradient(135deg, #f1f8e9, #dcedc8);
+      cursor: pointer;
+      font-size: 22px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      transition: all 0.2s ease;
+      font-family: inherit;
+      gap: 0;
+      padding: 0;
+    }
+    .check-box:hover { transform: scale(1.05); }
+    .check-box.checked {
+      border: 3px solid #388e3c;
+      background: linear-gradient(135deg, #a5d6a7, #388e3c);
+      box-shadow: 0 4px 14px rgba(56,142,60,0.45);
+      transform: scale(1.1);
+      font-size: 30px;
+    }
+    .check-box .box-num {
+      font-size: 10px;
+      font-weight: bold;
+      margin-top: 2px;
+      color: #558b2f;
+      font-family: inherit;
+    }
+    .check-box.checked .box-num { color: white; }
+
+    .star-wrap, .trophy-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 4px;
+    }
+    .star-icon, .trophy-icon {
+      transition: all 0.5s;
+      filter: grayscale(1) opacity(0.3);
+    }
+    .star-icon { font-size: 46px; }
+    .trophy-icon { font-size: 52px; }
+    .star-icon.earned {
+      filter: none;
+      transform: scale(1.25) rotate(-8deg);
+      animation: wobble 0.6s ease;
+    }
+    .trophy-icon.earned {
+      filter: none;
+      transform: scale(1.3) rotate(5deg);
+    }
+    .reward-label {
+      font-size: 11px;
+      font-weight: bold;
+      margin-top: 2px;
+      text-align: center;
+      color: #bbb;
+      transition: color 0.4s;
+      font-family: inherit;
+    }
+    .reward-label.earned { color: #e65100; }
+    .trophy-wrap .reward-label.earned { color: #bf360c; }
+
+    .progress-bar-wrap {
+      margin-top: 22px;
+    }
+    .progress-track {
+      background: #e8f5e9;
+      border-radius: 50px;
+      overflow: hidden;
+      height: 18px;
+      border: 2px solid #a5d6a7;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #66bb6a, #2e7d32);
+      border-radius: 50px;
+      transition: width 0.4s ease;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 8px;
+      width: 0%;
+    }
+    .progress-fill span {
+      font-size: 11px;
+      color: white;
+      font-weight: bold;
+      font-family: inherit;
+    }
+    .progress-msg {
+      text-align: center;
+      margin-top: 8px;
+      font-size: 16px;
+      font-weight: bold;
+      color: #388e3c;
+      font-family: inherit;
+      transition: color 0.4s;
+    }
+
+    /* Save indicator */
+    .save-indicator {
+      position: fixed;
+      bottom: 18px;
+      right: 18px;
+      background: rgba(0,0,0,0.55);
+      color: #c8f5a0;
+      font-family: inherit;
+      font-size: 13px;
+      padding: 7px 16px;
+      border-radius: 50px;
+      opacity: 0;
+      transition: opacity 0.4s;
+      z-index: 99;
+      pointer-events: none;
+    }
+    .save-indicator.show { opacity: 1; }
+
+    .reset-btn {
+      margin-top: 20px;
+      padding: 11px 32px;
+      border-radius: 50px;
+      border: 3px solid #f9e04b;
+      background: rgba(0,0,0,0.3);
+      color: #f9e04b;
+      font-size: 16px;
+      font-family: inherit;
+      cursor: pointer;
+      font-weight: bold;
+      letter-spacing: 0.5px;
+      transition: background 0.2s;
+      z-index: 1;
+    }
+    .reset-btn:hover { background: rgba(249,224,75,0.2); }
+
+    /* Reset confirm modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-overlay.open { display: flex; }
+    .modal-box {
+      background: #fff;
+      border-radius: 24px;
+      padding: 32px 28px;
+      text-align: center;
+      box-shadow: 0 16px 48px rgba(0,0,0,0.4), 0 0 0 4px #f9e04b;
+      max-width: 320px;
+      font-family: inherit;
+    }
+    .modal-box .modal-emoji { font-size: 48px; margin-bottom: 10px; }
+    .modal-box h2 { font-size: 22px; color: #2d6a30; margin-bottom: 8px; }
+    .modal-box p { font-size: 15px; color: #555; margin-bottom: 22px; }
+    .modal-btns { display: flex; gap: 12px; justify-content: center; }
+    .modal-btn {
+      padding: 10px 26px;
+      border-radius: 50px;
+      border: none;
+      font-size: 16px;
+      font-family: inherit;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .modal-btn.cancel { background: #e8f5e9; color: #388e3c; }
+    .modal-btn.confirm { background: #e53935; color: white; }
+
+    @keyframes wobble {
+      0%   { transform: scale(1.25) rotate(-8deg); }
+      30%  { transform: scale(1.35) rotate(8deg); }
+      60%  { transform: scale(1.25) rotate(-4deg); }
+      100% { transform: scale(1.25) rotate(-8deg); }
+    }
+    @keyframes checkPop {
+      0%   { transform: scale(1); }
+      50%  { transform: scale(1.3); }
+      100% { transform: scale(1.1); }
+    }
+    .pop { animation: checkPop 0.3s ease; }
+  </style>
+</head>
+<body>
+
+  <!-- Leaves -->
+  <div class="leaf" style="font-size:42px;top:5%;left:-1%;transform:rotate(10deg)">🌿</div>
+  <div class="leaf" style="font-size:36px;top:10%;left:88%;transform:rotate(-20deg)">🍃</div>
+  <div class="leaf" style="font-size:50px;top:0%;left:-2%;transform:rotate(30deg)">🌴</div>
+  <div class="leaf" style="font-size:38px;top:80%;left:-2%;transform:rotate(-15deg)">🍀</div>
+  <div class="leaf" style="font-size:44px;top:85%;left:87%;transform:rotate(25deg)">🌱</div>
+  <div class="leaf" style="font-size:32px;top:75%;left:90%;transform:rotate(-10deg)">🌾</div>
+
+  <!-- Header -->
+  <div class="header">
+    <div class="monkeys">🌴 🐒 🌴</div>
+    <div class="title" id="titleDisplay" onclick="startEdit()">Everett's Potty Chart ✏️</div>
+    <input type="text" id="nameInput" value="Everett" onblur="stopEdit()" onkeydown="if(event.key==='Enter') stopEdit()" />
+    <p class="subtitle">💧 Pee = 1 check &nbsp;|&nbsp; 💩 Poo = 2 checks</p>
+  </div>
+
+  <!-- Card -->
+  <div class="card">
+    <div class="legend">
+      <div class="legend-item" style="background:rgba(79,195,247,0.13);border:2px solid #4fc3f7">
+        <span class="emoji">💧</span><span class="lbl">Pee</span><span class="sub">= 1 check</span>
+      </div>
+      <div class="legend-item" style="background:rgba(165,121,92,0.13);border:2px solid #a5795c">
+        <span class="emoji">💩</span><span class="lbl">Poo</span><span class="sub">= 2 checks</span>
+      </div>
+    </div>
+
+    <div class="boxes-row" id="boxesRow"></div>
+
+    <div class="progress-bar-wrap">
+      <div class="progress-track">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="progress-msg" id="progressMsg">You can do it, Everett! 🌿</div>
+    </div>
+  </div>
+
+  <button class="reset-btn" onclick="confirmReset()">🔄 Start Over</button>
+
+  <!-- Save indicator -->
+  <div class="save-indicator" id="saveIndicator">✅ Saved!</div>
+
+  <!-- Reset confirm modal -->
+  <div class="modal-overlay" id="resetModal">
+    <div class="modal-box">
+      <div class="modal-emoji">🔄</div>
+      <h2>Start Over?</h2>
+      <p>This will clear all of Everett's progress. Are you sure?</p>
+      <div class="modal-btns">
+        <button class="modal-btn cancel" onclick="closeModal()">Nope!</button>
+        <button class="modal-btn confirm" onclick="doReset()">Yes, reset!</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = 'everett_potty_chart_v1';
+    const animals = ["🐒","🦁","🐘","🦒","🐊","🦓","🦜","🦏","🐆","🐢"];
+
+    // --- Persistence ---
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) return JSON.parse(raw);
+      } catch(e) {}
+      return { name: 'Everett', checked: Array(10).fill(false) };
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          name: getName(),
+          checked: checked
+        }));
+        flashSaved();
+      } catch(e) {}
+    }
+
+    let saveTimer;
+    function flashSaved() {
+      const el = document.getElementById('saveIndicator');
+      el.classList.add('show');
+      clearTimeout(saveTimer);
+      saveTimer = setTimeout(() => el.classList.remove('show'), 1800);
+    }
+
+    // --- State ---
+    const state = loadState();
+    let checked = state.checked;
+
+    // --- Name ---
+    function getName() {
+      return document.getElementById('nameInput').value || 'Everett';
+    }
+
+    function startEdit() {
+      document.getElementById('titleDisplay').style.display = 'none';
+      const input = document.getElementById('nameInput');
+      input.style.display = 'inline-block';
+      input.focus();
+      input.select();
+    }
+
+    function stopEdit() {
+      const input = document.getElementById('nameInput');
+      input.style.display = 'none';
+      const display = document.getElementById('titleDisplay');
+      display.style.display = 'block';
+      display.textContent = getName() + "'s Potty Chart ✏️";
+      updateUI();
+      saveState();
+    }
+
+    // --- Boxes ---
+    function buildBoxes() {
+      const row = document.getElementById('boxesRow');
+      row.innerHTML = '';
+
+      for (let i = 0; i < 5; i++) row.appendChild(makeBox(i));
+
+      const starWrap = document.createElement('div');
+      starWrap.className = 'star-wrap';
+      starWrap.innerHTML = `<div class="star-icon" id="starIcon">⭐</div><div class="reward-label" id="dessertLabel">DESSERT</div>`;
+      row.appendChild(starWrap);
+
+      for (let i = 5; i < 10; i++) row.appendChild(makeBox(i));
+
+      const trophyWrap = document.createElement('div');
+      trophyWrap.className = 'trophy-wrap';
+      trophyWrap.innerHTML = `<div class="trophy-icon" id="trophyIcon">🏆</div><div class="reward-label" id="prizeLabel">PRIZE</div>`;
+      row.appendChild(trophyWrap);
+    }
+
+    function makeBox(i) {
+      const btn = document.createElement('button');
+      btn.className = 'check-box' + (checked[i] ? ' checked' : '');
+      btn.id = 'box' + i;
+      btn.onclick = () => toggle(i);
+      btn.innerHTML = checked[i]
+        ? `<span>✅</span><span class="box-num">${i+1}</span>`
+        : `<span style="opacity:0.5;font-size:22px">${animals[i]}</span><span class="box-num">${i+1}</span>`;
+      return btn;
+    }
+
+    function toggle(i) {
+      checked[i] = !checked[i];
+      const btn = document.getElementById('box' + i);
+      btn.className = 'check-box pop' + (checked[i] ? ' checked' : '');
+      btn.innerHTML = checked[i]
+        ? `<span>✅</span><span class="box-num">${i+1}</span>`
+        : `<span style="opacity:0.5;font-size:22px">${animals[i]}</span><span class="box-num">${i+1}</span>`;
+      setTimeout(() => btn.classList.remove('pop'), 300);
+      updateUI();
+      saveState();
+    }
+
+    function updateUI() {
+      const count = checked.filter(Boolean).length;
+      const name = getName();
+      const dessert = count >= 5;
+      const prize = count >= 10;
+
+      const star = document.getElementById('starIcon');
+      const dessertLbl = document.getElementById('dessertLabel');
+      star.className = 'star-icon' + (dessert ? ' earned' : '');
+      dessertLbl.className = 'reward-label' + (dessert ? ' earned' : '');
+      dessertLbl.textContent = dessert ? '🍦 DESSERT!' : 'DESSERT';
+
+      const trophy = document.getElementById('trophyIcon');
+      const prizeLbl = document.getElementById('prizeLabel');
+      trophy.className = 'trophy-icon' + (prize ? ' earned' : '');
+      prizeLbl.className = 'reward-label' + (prize ? ' earned' : '');
+      prizeLbl.textContent = prize ? '🎁 PRIZE!!' : 'PRIZE';
+
+      const fill = document.getElementById('progressFill');
+      fill.style.width = (count / 10 * 100) + '%';
+      fill.innerHTML = count > 1 ? `<span>${count}/10</span>` : '';
+
+      const msg = document.getElementById('progressMsg');
+      if (prize) {
+        msg.style.color = '#bf360c';
+        msg.textContent = `🎉 AMAZING ${name}! You earned a PRIZE! 🎉`;
+      } else if (dessert) {
+        msg.style.color = '#e65100';
+        msg.textContent = `🍦 Dessert time ${name}! ${10 - count} more for your PRIZE!`;
+      } else if (count === 0) {
+        msg.style.color = '#388e3c';
+        msg.textContent = `You can do it, ${name}! 🌿`;
+      } else {
+        msg.style.color = '#388e3c';
+        msg.textContent = `Great job ${name}! ${5 - count} more for DESSERT! 🍦`;
+      }
+    }
+
+    // --- Reset with confirm ---
+    function confirmReset() {
+      document.getElementById('resetModal').classList.add('open');
+    }
+    function closeModal() {
+      document.getElementById('resetModal').classList.remove('open');
+    }
+    function doReset() {
+      checked = Array(10).fill(false);
+      closeModal();
+      buildBoxes();
+      updateUI();
+      saveState();
+    }
+
+    // --- Init ---
+    document.getElementById('nameInput').value = state.name;
+    document.getElementById('titleDisplay').textContent = state.name + "'s Potty Chart ✏️";
+    buildBoxes();
+    updateUI();
+  </script>
+</body>
+</html>
